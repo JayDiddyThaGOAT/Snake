@@ -1,15 +1,15 @@
-#include <SFML/Graphics.hpp>
+#include "snake.h"
+#include "apple.h"
 
 int main()
 {
-	srand(time(0));
 	sf::RenderWindow window(sf::VideoMode(512, 512), "Snake");
+	window.setFramerateLimit(60);
 
-	sf::RectangleShape apple(sf::Vector2f(16.f, 16.f));
-	apple.setFillColor(sf::Color::Red);
-	int appleStartX = static_cast<int>(rand() % window.getSize().x);
-	int appleStartY = static_cast<int>(rand() % window.getSize().y);
-	apple.setPosition(sf::Vector2f(appleStartX, appleStartY));
+	Apple apple;
+	apple.spawn(window);
+
+	Snake snake(window.getSize().x / 2, window.getSize().y / 2);
 
 	while (window.isOpen())
 	{
@@ -21,7 +21,20 @@ int main()
 		}
 
 		window.clear();
-		window.draw(apple);
+
+		window.draw(apple);;
+
+		snake.update(window);
+		snake.draw(window);
+
+		float distance = sqrt(pow(snake.getHead().getPosition().x - apple.getPosition().x, 2) + pow(snake.getHead().getPosition().y - apple.getPosition().y, 2));
+
+		if (distance <= 16.f)
+		{
+			snake.grow();
+			apple.spawn(window);
+		}
+
 		window.display();
 	}
 
