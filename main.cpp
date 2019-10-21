@@ -1,15 +1,21 @@
-#include "snake.h"
-#include "apple.h"
+#include <SFML/Graphics.hpp>
+
+const int SIZE = 16;
+const int ROWS = 32;
+const int COLS = 32;
+
+int width = ROWS * SIZE;
+int height = COLS * SIZE;
 
 int main()
 {
-	sf::RenderWindow window(sf::VideoMode(512, 512), "Snake");
-	window.setFramerateLimit(60);
+	sf::RenderWindow window(sf::VideoMode(width, height), "Snake", sf::Style::Titlebar | sf::Style::Close);
 
-	Apple apple;
-	apple.spawn(window);
+	sf::Texture emptyTexture;
+	emptyTexture.loadFromFile("Sprites/Empty.png");
 
-	Snake snake(window.getSize().x / 2, window.getSize().y / 2);
+	sf::Sprite emptySprite;
+	emptySprite.setTexture(emptyTexture);
 
 	while (window.isOpen())
 	{
@@ -22,17 +28,13 @@ int main()
 
 		window.clear();
 
-		window.draw(apple);;
-
-		snake.update(window);
-		snake.draw(window);
-
-		float distance = sqrt(pow(snake.getHead().getPosition().x - apple.getPosition().x, 2) + pow(snake.getHead().getPosition().y - apple.getPosition().y, 2));
-
-		if (distance <= 16.f)
+		for (int i = 0; i < ROWS; i++)
 		{
-			snake.grow();
-			apple.spawn(window);
+			for (int j = 0; j < COLS; j++)
+			{
+				emptySprite.setPosition(i * SIZE, j * SIZE);
+				window.draw(emptySprite);
+			}
 		}
 
 		window.display();
