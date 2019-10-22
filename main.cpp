@@ -1,8 +1,8 @@
 #include <SFML/Graphics.hpp>
 
-const int SIZE = 16;
-const int ROWS = 32;
-const int COLS = 32;
+const int SIZE = 32;
+const int ROWS = 16;
+const int COLS = 16;
 
 int width = ROWS * SIZE;
 int height = COLS * SIZE;
