@@ -7,9 +7,11 @@ const int COLS = 17;
 int width = ROWS * SIZE;
 int height = COLS * SIZE;
 
-char direction = 'S';
+char snakeDirection = 'S';
 int snakeLength = 4;
 bool dead = false;
+
+bool snakeAI = true;
 
 struct Snake
 {
@@ -26,6 +28,21 @@ Apple apple;
 sf::Texture emptyTexture, appleTexture, snakeHeadTexture, snakeBodyTexture;
 sf::Sprite emptySprite, appleSprite, snakeHeadSprite, snakeBodySprite;
 
+bool IsInSnake(sf::Vector2i& cell)
+{
+	bool snakeNeighbor = false;
+	for (int i = 1; i < snakeLength; i++)
+	{
+		if (cell.x == snake[i].x && cell.y == snake[i].y)
+		{
+			snakeNeighbor = true;
+			break;
+		}
+	}
+
+	return snakeNeighbor;
+}
+
 void Update()
 {
 	if (dead)
@@ -37,11 +54,11 @@ void Update()
 		snake[i].y = snake[i - 1].y;
 	}
 
-	switch (direction)
+	switch (snakeDirection)
 	{
 	case 'N':
 		if (snake[0].y == 0)
-			snake[0].y = ROWS;
+			snake[0].y = ROWS - 1;
 		else
 			snake[0].y -= 1;
 		break;
@@ -50,7 +67,7 @@ void Update()
 		break;
 	case 'W':
 		if (snake[0].x == 0)
-			snake[0].x = COLS;
+			snake[0].x = COLS - 1;
 		else
 			snake[0].x -= 1;
 		break;
@@ -98,6 +115,14 @@ int main()
 	apple.x = rand() % COLS;
 	apple.y = rand() % ROWS;
 
+	snake[0].x = (COLS - 1) / 2;
+	snake[0].y = (ROWS - 1) / 2;
+	for (int i = 1; i < snakeLength; i++)
+	{
+		snake[i].x = snake[0].x;
+		snake[i].y = snake[0].y;
+	}
+
 	while (window.isOpen())
 	{
 		float time = clock.getElapsedTime().asSeconds();
@@ -119,14 +144,67 @@ int main()
 			Update();
 		}
 
-		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Up))
-			direction = 'N';
-		else if (sf::Keyboard::isKeyPressed(sf::Keyboard::Down))
-			direction = 'S';
-		else if (sf::Keyboard::isKeyPressed(sf::Keyboard::Left))
-			direction = 'W';
-		else if (sf::Keyboard::isKeyPressed(sf::Keyboard::Right))
-			direction = 'E';
+		if (!snakeAI)
+		{
+			if (sf::Keyboard::isKeyPressed(sf::Keyboard::Up))
+				snakeDirection = 'N';
+			else if (sf::Keyboard::isKeyPressed(sf::Keyboard::Down))
+				snakeDirection = 'S';
+			else if (sf::Keyboard::isKeyPressed(sf::Keyboard::Left))
+				snakeDirection = 'W';
+			else if (sf::Keyboard::isKeyPressed(sf::Keyboard::Right))
+				snakeDirection = 'E';
+		}
+		else
+		{
+			sf::Vector2i north, south, west, east;
+			if (snake[0].y == 0)
+				north = sf::Vector2i(snake[0].x, ROWS - 1);
+			else
+				north = sf::Vector2i(snake[0].x, snake[0].y - 1);
+
+			if (snake[0].y == ROWS - 1)
+				south = sf::Vector2i(snake[0].x, 0);
+			else
+				south = sf::Vector2i(snake[0].x, snake[0].y + 1);
+
+			if (snake[0].x == 0)
+				west = sf::Vector2i(COLS - 1, snake[0].y);
+			else
+				west = sf::Vector2i(snake[0].x - 1, snake[0].y);
+
+			if (snake[0].x == COLS - 1)
+				east = sf::Vector2i(0, snake[0].y);
+			else
+				east = sf::Vector2i(snake[0].x + 1, snake[0].y);
+
+			std::map<char, sf::Vector2i> neighbors;
+
+			if (!IsInSnake(north))
+				neighbors['N'] = north;
+
+			if (!IsInSnake(south))
+				neighbors['S'] = south;
+
+			if (!IsInSnake(west))
+				neighbors['W'] = west;
+
+			if (!IsInSnake(east))
+				neighbors['E'] = east;
+
+			int minDistance = 100000000;
+
+			for (auto& neighbor : neighbors)
+			{
+				int distanceFromNeighborToApple = abs(neighbor.second.x - apple.x) + abs(neighbor.second.y - apple.y);
+
+				if (distanceFromNeighborToApple < minDistance)
+				{
+					snakeDirection = neighbor.first;
+					minDistance = distanceFromNeighborToApple;
+				}
+			}
+		}
 
 		for (int i = 0; i < COLS; i++)
 		{
