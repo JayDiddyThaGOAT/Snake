@@ -25,7 +25,7 @@ Clone this repo or download the ZIP
 ```
 1. Open the Debug folder
 2. Click on the Snake.exe
-3. AI for snake is currently on. Set snakeAI to false if you want to control the snake with the up, down, left, or right keys
+3. Press SPACE to play/pause the game
 ```
 
 ## Testing the Game
