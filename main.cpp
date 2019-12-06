@@ -235,6 +235,7 @@ int main()
 
 		if (dead)
 		{
+			
 			if (sf::Keyboard::isKeyPressed(sf::Keyboard::Space))
 				StartGame();
 		}
@@ -251,7 +252,7 @@ int main()
 			{
 				eatTimer += time;
 
-				if (eatTimer > delay * 3)
+				if (eatTimer > delay * 3 || dead)
 				{
 					eatTimer = 0;
 					eaten = false;
