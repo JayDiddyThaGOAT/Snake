@@ -1,5 +1,5 @@
 #include <SFML/Graphics.hpp>
-#include <set>
+#include <stack>
 
 const int SIZE = 32;
 const int ROWS = 17;
@@ -12,7 +12,9 @@ char snakeDirection;
 int snakeLength = 3;
 std::vector<int> snake;
 bool dead = false;
+
 bool snakeAI = false;
+std::string snakePath;
 
 int apple;
 int newTail;
@@ -168,6 +170,30 @@ void StartGame()
 	cells[apple].empty = false;
 
 	dead = false;
+
+	if (snakeAI)
+	{
+		cells[snake[0]].direction = 'N';
+
+		std::stack<int> visited;
+		visited.push(snake[0]);
+
+		bool begin_path = false;
+
+		while (!visited.empty())
+		{
+			if (!begin_path)
+				begin_path = true;
+
+			int current = visited.top();
+			visited.pop();
+
+			int north = current - ROWS;
+			int south = current + ROWS;
+			int west = current - 1;
+			int east = current + 1;
+		}
+	}
 }
 
 int main()
@@ -208,6 +234,20 @@ int main()
 					if (!dead)
 						playing = !playing;
 				}
+				else
+				{
+					if (!snakeAI)
+					{
+						if (event.key.code == sf::Keyboard::Up || event.key.code == sf::Keyboard::W)
+							snakeDirection = 'N';
+						else if (event.key.code == sf::Keyboard::Down || event.key.code == sf::Keyboard::S)
+							snakeDirection = 'S';
+						else if (event.key.code == sf::Keyboard::Left || event.key.code == sf::Keyboard::A)
+							snakeDirection = 'W';
+						else if (event.key.code == sf::Keyboard::Right || event.key.code == sf::Keyboard::D)
+							snakeDirection = 'E';
+					}
+				}
 			}
 		}
 
@@ -217,25 +257,8 @@ int main()
 		clock.restart();
 		timer += time;
 
-		if (!snakeAI)
-		{
-			if (sf::Keyboard::isKeyPressed(sf::Keyboard::Up) || sf::Keyboard::isKeyPressed(sf::Keyboard::W))
-				snakeDirection = 'N';
-			else if (sf::Keyboard::isKeyPressed(sf::Keyboard::Down) || sf::Keyboard::isKeyPressed(sf::Keyboard::S))
-				snakeDirection = 'S';
-			else if (sf::Keyboard::isKeyPressed(sf::Keyboard::Left) || sf::Keyboard::isKeyPressed(sf::Keyboard::A))
-				snakeDirection = 'W';
-			else if (sf::Keyboard::isKeyPressed(sf::Keyboard::Right) || sf::Keyboard::isKeyPressed(sf::Keyboard::D))
-				snakeDirection = 'E';
-		}
-		else
-		{
-
-		}
-
 		if (dead)
 		{
-			
 			if (sf::Keyboard::isKeyPressed(sf::Keyboard::Space))
 				StartGame();
 		}
