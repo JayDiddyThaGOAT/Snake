@@ -1,4 +1,5 @@
 #include <SFML/Graphics.hpp>
+#include <set>
 
 const int SIZE = 32;
 const int ROWS = 17;
@@ -11,7 +12,7 @@ char snakeDirection;
 int snakeLength = 3;
 std::vector<int> snake;
 bool dead = false;
-bool snakeAI = true;
+bool snakeAI = false;
 
 int apple;
 int newTail;
@@ -69,21 +70,21 @@ void Update()
 		break;
 	}
 
+	if (!cells[snake[0]].empty && snake[0] != apple)
+		dead = true;
+
 	cells[snake[0]].visited = true;
 	cells[snake[0]].empty = false;
 	cells[snake[0]].direction = snakeDirection;
-
-	for (int i = 1; i < snakeLength; i++)
-	{
-		if (snake[i] == snake[0])
-			dead = true;
-	}
 
 	if (snake[0] == apple)
 	{
 		eaten = true;
 
-		apple = rand() % (ROWS * COLS);
+		do
+		{
+			apple = rand() % (ROWS * COLS);
+		} while (!cells[apple].empty);
 		cells[apple].empty = false;
 
 		int tail = snake.size() - 1;
