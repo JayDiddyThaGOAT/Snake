@@ -26,7 +26,7 @@ struct Cell
 	int x, y;
 	char direction;
 	bool visited;
-	bool empty;
+	bool solid;
 };
 
 Cell cells[COUNT * COUNT];
@@ -53,7 +53,7 @@ std::vector<int> NeighborsOf(int root)
 	if (cells[root + COUNT].y < COUNT - 1)
 		neighbors.push_back(root + COUNT);
 
-	if (cells[root - 1].y >= 0)
+	if (cells[root - 1].x >= 0)
 		neighbors.push_back(root - 1);
 
 
@@ -66,10 +66,11 @@ void Update()
 		return;
 
 	int tail = snake.size() - 1;
-	cells[snake[tail]].empty = true;
+	cells[snake[tail]].solid = false;
 	for (int i = tail; i > 0; i--)
 	{
 		snake[i] = snake[i - 1];
+		cells[snake[i]].solid = true;
 	}
 
 	switch (snakeDirection)
@@ -101,9 +102,9 @@ void Update()
 	}
 
 	cells[snake[0]].visited = true;
-	cells[snake[0]].empty = false;
+	cells[snake[0]].solid = true;
 	cells[snake[0]].direction = snakeDirection;
-	
+
 	if (snake.size() == 2)
 	{
 		int head = snake[0];
@@ -111,14 +112,12 @@ void Update()
 
 		if (cells[head].direction == 'N' && cells[tail].direction == 'S' || cells[head].direction == 'S' && cells[tail].direction == 'N')
 		{
-			cells[head].empty = true;
 			snake[0] = snake[1];
 			dead = true;
 		}
 
 		if (cells[head].direction == 'W' && cells[tail].direction == 'E' || cells[head].direction == 'E' && cells[tail].direction == 'W')
 		{
-			cells[head].empty = true;
 			snake[0] = snake[1];
 			dead = true;
 		}
@@ -139,8 +138,8 @@ void Update()
 		do
 		{
 			apple = rand() % (COUNT * COUNT);
-		} while (!cells[apple].empty);
-		cells[apple].empty = false;
+		} while (cells[apple].solid);
+		cells[apple].solid = false;
 
 		int tail = snake.size() - 1;
 		switch (cells[snake[tail]].direction)
@@ -160,7 +159,6 @@ void Update()
 		}
 
 		snake.push_back(newTail);
-		cells[newTail].empty = false;
 		snakeLength = snake.size();
 	}
 }
@@ -177,7 +175,7 @@ void StartGame()
 		{
 			cells[i * COUNT + j].x = j;
 			cells[i * COUNT + j].y = i;
-			cells[i * COUNT + j].empty = true;
+			cells[i * COUNT + j].solid = false;
 			cells[i * COUNT + j].visited = false;
 			cells[i + COUNT + j].direction = 'X';
 		}
@@ -193,17 +191,16 @@ void StartGame()
 		center += offsets[rand() % 4];
 	}
 
-	snake.push_back(center);
 
+	snake.push_back(center);
 	cells[snake[0]].visited = true;
-	cells[snake[0]].empty = false;
-	cells[snake[0]].direction = snakeDirection;
+	cells[snake[0]].solid = true;
 
 	do
 	{
 		apple = rand() % (COUNT * COUNT);
-	} while (!cells[apple].empty);
-	cells[apple].empty = false;
+	} while (cells[apple].solid);
+	cells[apple].solid = false;
 }
 
 int main()
@@ -342,7 +339,7 @@ int main()
 			sf::Text text(std::to_string(i), font);
 			text.setCharacterSize(SIZE / 4);
 
-			if (!cells[i].empty)
+			if (cells[i].solid)
 				text.setFillColor(sf::Color::Blue);
 			else
 				text.setFillColor(sf::Color::Black);
