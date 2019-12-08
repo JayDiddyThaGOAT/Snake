@@ -3,11 +3,10 @@
 #include <iostream>
 
 const int SIZE = 32;
-const int ROWS = 17;
-const int COLS = 17;
+const int COUNT = 16;
 
-int width = ROWS * SIZE;
-int height = COLS * SIZE;
+int width = COUNT * SIZE;
+int height = COUNT * SIZE;
 
 char snakeDirection;
 int snakeLength;
@@ -30,7 +29,7 @@ struct Cell
 	bool empty;
 };
 
-Cell cells[ROWS * COLS];
+Cell cells[COUNT * COUNT];
 
 sf::Texture emptyTexture, appleTexture, snakeHeadTexture, snakeBodyTexture;
 sf::Sprite emptySprite, appleSprite, snakeHeadSprite, snakeBodySprite;
@@ -45,14 +44,14 @@ std::vector<int> NeighborsOf(int root)
 {
 	std::vector<int> neighbors;
 
-	if (cells[root - ROWS].y >= 0)
-		neighbors.push_back(root - ROWS);
+	if (cells[root - COUNT].y >= 0)
+		neighbors.push_back(root - COUNT);
 
-	if (cells[root + 1].x < COLS - 1)
+	if (cells[root + 1].x < COUNT - 1)
 		neighbors.push_back(root + 1);
 
-	if (cells[root + ROWS].y < ROWS - 1)
-		neighbors.push_back(root + ROWS);
+	if (cells[root + COUNT].y < COUNT - 1)
+		neighbors.push_back(root + COUNT);
 
 	if (cells[root - 1].y >= 0)
 		neighbors.push_back(root - 1);
@@ -77,13 +76,13 @@ void Update()
 	{
 	case 'N':
 		if (cells[snake[0]].y > 0)
-			snake[0] -= ROWS;
+			snake[0] -= COUNT;
 		else
 			dead = true;
 		break;
 	case 'S':
-		if (cells[snake[0]].y < ROWS - 1)
-			snake[0] += ROWS;
+		if (cells[snake[0]].y < COUNT - 1)
+			snake[0] += COUNT;
 		else
 			dead = true;
 		break;
@@ -94,21 +93,17 @@ void Update()
 			dead = true;
 		break;
 	case 'E':
-		if (cells[snake[0]].x < COLS - 1)
+		if (cells[snake[0]].x < COUNT - 1)
 			snake[0]++;
 		else
 			dead = true;
 		break;
 	}
 
-	if (!cells[snake[0]].empty && snake[0] != apple)
-		dead = true;
-
 	cells[snake[0]].visited = true;
 	cells[snake[0]].empty = false;
 	cells[snake[0]].direction = snakeDirection;
-
-
+	
 	if (snake.size() == 2)
 	{
 		int head = snake[0];
@@ -128,6 +123,14 @@ void Update()
 			dead = true;
 		}
 	}
+	else if (snake.size() > 2)
+	{
+		for (int i = 1; i < snake.size(); i++)
+		{
+			if (snake[0] == snake[i])
+				dead = true;
+		}
+	}
 
 	if (snake[0] == apple)
 	{
@@ -135,7 +138,7 @@ void Update()
 
 		do
 		{
-			apple = rand() % (ROWS * COLS);
+			apple = rand() % (COUNT * COUNT);
 		} while (!cells[apple].empty);
 		cells[apple].empty = false;
 
@@ -143,10 +146,10 @@ void Update()
 		switch (cells[snake[tail]].direction)
 		{
 		case 'N':
-			newTail = snake[tail] + ROWS;
+			newTail = snake[tail] + COUNT;
 			break;
 		case 'S':
-			newTail = snake[tail] - ROWS;
+			newTail = snake[tail] - COUNT;
 			break;
 		case 'W':
 			newTail = snake[tail] + 1;
@@ -168,22 +171,28 @@ void StartGame()
 	gameBegan = false;
 	dead = false;
 
-	for (int i = 0; i < ROWS; i++)
+	for (int i = 0; i < COUNT; i++)
 	{
-		for (int j = 0; j < COLS; j++)
+		for (int j = 0; j < COUNT; j++)
 		{
-			cells[i * COLS + j].x = j;
-			cells[i * COLS + j].y = i;
-			cells[i * COLS + j].empty = true;
-			cells[i * COLS + j].visited = false;
-			cells[i + COLS + j].direction = 'X';
+			cells[i * COUNT + j].x = j;
+			cells[i * COUNT + j].y = i;
+			cells[i * COUNT + j].empty = true;
+			cells[i * COUNT + j].visited = false;
+			cells[i + COUNT + j].direction = 'X';
 		}
 	}
 
 	snake.clear();
 	snakeLength = 0;
 
-	int center = (ROWS * COLS) / 2;
+	int center = (COUNT * COUNT) / 2;
+	if (COUNT % 2 == 0)
+	{
+		int offsets[4] = { (COUNT / 2) - 1,  COUNT / 2, COUNT + (COUNT / 2) - 1, COUNT + (COUNT / 2) };
+		center += offsets[rand() % 4];
+	}
+
 	snake.push_back(center);
 
 	cells[snake[0]].visited = true;
@@ -192,7 +201,7 @@ void StartGame()
 
 	do
 	{
-		apple = rand() % (ROWS * COLS);
+		apple = rand() % (COUNT * COUNT);
 	} while (!cells[apple].empty);
 	cells[apple].empty = false;
 }
@@ -216,7 +225,7 @@ int main()
 	font.loadFromFile("Font/ARCADE_I.TTF");
 
 	sf::Clock clock;
-	float timer = 0, delay = 0.25;
+	float timer = 0, delay = 0.1;
 	float eatTimer = 0;
 
 	StartGame();
@@ -296,9 +305,9 @@ int main()
 			}
 		}
 
-		for (int i = 0; i < COLS; i++)
+		for (int i = 0; i < COUNT; i++)
 		{
-			for (int j = 0; j < ROWS; j++)
+			for (int j = 0; j < COUNT; j++)
 			{
 				emptySprite.setPosition(sf::Vector2f(i * SIZE, j * SIZE));
 				window.draw(emptySprite);
@@ -328,7 +337,7 @@ int main()
 		appleSprite.setPosition(cells[apple].x * SIZE, cells[apple].y * SIZE);
 		window.draw(appleSprite);
 
-		for (int i = 0; i < ROWS * COLS; i++)
+		for (int i = 0; i < COUNT * COUNT; i++)
 		{
 			sf::Text text(std::to_string(i), font);
 			text.setCharacterSize(SIZE / 4);
