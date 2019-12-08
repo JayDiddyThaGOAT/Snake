@@ -1,5 +1,6 @@
 #include <SFML/Graphics.hpp>
 #include <stack>
+#include <iostream>
 
 const int SIZE = 32;
 const int ROWS = 17;
@@ -14,7 +15,6 @@ std::vector<int> snake;
 bool dead = false;
 
 bool snakeAI = false;
-std::string snakePath;
 
 int apple;
 int newTail;
@@ -36,6 +36,31 @@ sf::Texture emptyTexture, appleTexture, snakeHeadTexture, snakeBodyTexture;
 sf::Sprite emptySprite, appleSprite, snakeHeadSprite, snakeBodySprite;
 sf::Font font;
 
+int ManhattanDistance(int a, int b)
+{
+	return abs(cells[b].x - cells[a].x) + abs(cells[b].y - cells[a].y);
+}
+
+std::vector<int> NeighborsOf(int root)
+{
+	std::vector<int> neighbors;
+
+	if (cells[root - ROWS].y >= 0)
+		neighbors.push_back(root - ROWS);
+
+	if (cells[root + 1].x < COLS - 1)
+		neighbors.push_back(root + 1);
+
+	if (cells[root + ROWS].y < ROWS - 1)
+		neighbors.push_back(root + ROWS);
+
+	if (cells[root - 1].y >= 0)
+		neighbors.push_back(root - 1);
+
+
+	return neighbors;
+}
+
 void Update()
 {
 	if (dead)
@@ -43,8 +68,10 @@ void Update()
 
 	int tail = snake.size() - 1;
 	cells[snake[tail]].empty = true;
-	for (int i = snake.size() - 1; i > 0; i--)
+	for (int i = tail; i > 0; i--)
+	{
 		snake[i] = snake[i - 1];
+	}
 
 	switch (snakeDirection)
 	{
@@ -118,6 +145,7 @@ void StartGame()
 {
 	paused = false;
 	gameBegan = false;
+	dead = false;
 
 	for (int i = 0; i < ROWS; i++)
 	{
@@ -132,46 +160,20 @@ void StartGame()
 	}
 
 	snake.clear();
+	snakeLength = 0;
 
 	int center = (ROWS * COLS) / 2;
 	snake.push_back(center);
-
-	snakeLength = 0;
-	for (int i = 1; i <= snakeLength; i++)
-	{
-		switch (snakeDirection)
-		{
-		case 'N':
-			snake.push_back(center + (i * ROWS));
-			cells[center + (i * ROWS)].empty = false;
-			cells[center + (i * ROWS)].direction = snakeDirection;
-			break;
-		case 'S':
-			snake.push_back(center - (i * ROWS));
-			cells[center - (i * ROWS)].empty = false;
-			cells[center - (i * ROWS)].direction = snakeDirection;
-			break;
-		case 'W':
-			snake.push_back(center + i);
-			cells[center + i].empty = false;
-			cells[center + i].direction = snakeDirection;
-			break;
-		case 'E':
-			snake.push_back(center - i);
-			cells[center - i].empty = false;
-			cells[center - i].direction = snakeDirection;
-			break;
-		}
-	}
 
 	cells[snake[0]].visited = true;
 	cells[snake[0]].empty = false;
 	cells[snake[0]].direction = snakeDirection;
 
-	apple = rand() % snake[0];
+	do
+	{
+		apple = rand() % (ROWS * COLS);
+	} while (!cells[apple].empty);
 	cells[apple].empty = false;
-
-	dead = false;
 }
 
 int main()
@@ -205,53 +207,46 @@ int main()
 		{
 			if (event.type == sf::Event::Closed)
 				window.close();
-			else if (event.type == sf::Event::KeyPressed)
+		}
+
+		if (!dead)
+		{
+			if (!snakeAI)
 			{
-				if (event.key.code == sf::Keyboard::Space)
+				if (sf::Keyboard::isKeyPressed(sf::Keyboard::W) || sf::Keyboard::isKeyPressed(sf::Keyboard::Up))
 				{
-					if (gameBegan)
-					{
-						if (!dead)
-							paused = !paused;
-						else
-							StartGame();
-					}
+					snakeDirection = 'N';
+
+					if (!gameBegan)
+						gameBegan = true;
 				}
-				else
+				else if (sf::Keyboard::isKeyPressed(sf::Keyboard::D) || sf::Keyboard::isKeyPressed(sf::Keyboard::Right))
 				{
-					if (!snakeAI)
-					{
-						if (event.key.code == sf::Keyboard::Up || event.key.code == sf::Keyboard::W)
-						{
-							snakeDirection = 'N';
+					snakeDirection = 'E';
 
-							if (!gameBegan)
-								gameBegan = true;
-						}
-						else if (event.key.code == sf::Keyboard::Down || event.key.code == sf::Keyboard::S)
-						{
-							snakeDirection = 'S';
+					if (!gameBegan)
+						gameBegan = true;
+				}
+				else if (sf::Keyboard::isKeyPressed(sf::Keyboard::S) || sf::Keyboard::isKeyPressed(sf::Keyboard::Down))
+				{
+					snakeDirection = 'S';
 
-							if (!gameBegan)
-								gameBegan = true;
-						}
-						else if (event.key.code == sf::Keyboard::Left || event.key.code == sf::Keyboard::A)
-						{
-							snakeDirection = 'W';
+					if (!gameBegan)
+						gameBegan = true;
+				}
+				else if (sf::Keyboard::isKeyPressed(sf::Keyboard::A) || sf::Keyboard::isKeyPressed(sf::Keyboard::Left))
+				{
+					snakeDirection = 'W';
 
-							if (!gameBegan)
-								gameBegan = true;
-						}
-						else if (event.key.code == sf::Keyboard::Right || event.key.code == sf::Keyboard::D)
-						{
-							snakeDirection = 'E';
-
-							if (!gameBegan)
-								gameBegan = true;
-						}
-					}
+					if (!gameBegan)
+						gameBegan = true;
 				}
 			}
+		}
+		else
+		{
+			if (sf::Keyboard::isKeyPressed(sf::Keyboard::Space))
+				StartGame();
 		}
 
 		window.clear();
@@ -265,6 +260,7 @@ int main()
 			if (timer > delay)
 			{
 				timer = 0;
+
 				Update();
 			}
 
