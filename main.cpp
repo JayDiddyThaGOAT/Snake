@@ -9,7 +9,7 @@ int width = ROWS * SIZE;
 int height = COLS * SIZE;
 
 char snakeDirection;
-int snakeLength = 3;
+int snakeLength;
 std::vector<int> snake;
 bool dead = false;
 
@@ -18,7 +18,9 @@ std::string snakePath;
 
 int apple;
 int newTail;
-bool eaten, playing;
+bool eaten;
+
+bool gameBegan, paused;
 
 struct Cell
 {
@@ -114,7 +116,8 @@ void Update()
 
 void StartGame()
 {
-	playing = false;
+	paused = false;
+	gameBegan = false;
 
 	for (int i = 0; i < ROWS; i++)
 	{
@@ -133,8 +136,7 @@ void StartGame()
 	int center = (ROWS * COLS) / 2;
 	snake.push_back(center);
 
-	snakeLength = 3;
-	snakeDirection = 'N';
+	snakeLength = 0;
 	for (int i = 1; i <= snakeLength; i++)
 	{
 		switch (snakeDirection)
@@ -170,30 +172,6 @@ void StartGame()
 	cells[apple].empty = false;
 
 	dead = false;
-
-	if (snakeAI)
-	{
-		cells[snake[0]].direction = 'N';
-
-		std::stack<int> visited;
-		visited.push(snake[0]);
-
-		bool begin_path = false;
-
-		while (!visited.empty())
-		{
-			if (!begin_path)
-				begin_path = true;
-
-			int current = visited.top();
-			visited.pop();
-
-			int north = current - ROWS;
-			int south = current + ROWS;
-			int west = current - 1;
-			int east = current + 1;
-		}
-	}
 }
 
 int main()
@@ -231,21 +209,46 @@ int main()
 			{
 				if (event.key.code == sf::Keyboard::Space)
 				{
-					if (!dead)
-						playing = !playing;
+					if (gameBegan)
+					{
+						if (!dead)
+							paused = !paused;
+						else
+							StartGame();
+					}
 				}
 				else
 				{
 					if (!snakeAI)
 					{
 						if (event.key.code == sf::Keyboard::Up || event.key.code == sf::Keyboard::W)
+						{
 							snakeDirection = 'N';
+
+							if (!gameBegan)
+								gameBegan = true;
+						}
 						else if (event.key.code == sf::Keyboard::Down || event.key.code == sf::Keyboard::S)
+						{
 							snakeDirection = 'S';
+
+							if (!gameBegan)
+								gameBegan = true;
+						}
 						else if (event.key.code == sf::Keyboard::Left || event.key.code == sf::Keyboard::A)
+						{
 							snakeDirection = 'W';
+
+							if (!gameBegan)
+								gameBegan = true;
+						}
 						else if (event.key.code == sf::Keyboard::Right || event.key.code == sf::Keyboard::D)
+						{
 							snakeDirection = 'E';
+
+							if (!gameBegan)
+								gameBegan = true;
+						}
 					}
 				}
 			}
@@ -257,13 +260,7 @@ int main()
 		clock.restart();
 		timer += time;
 
-		if (dead)
-		{
-			if (sf::Keyboard::isKeyPressed(sf::Keyboard::Space))
-				StartGame();
-		}
-
-		if (playing)
+		if (gameBegan && !paused)
 		{
 			if (timer > delay)
 			{
