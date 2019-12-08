@@ -108,6 +108,27 @@ void Update()
 	cells[snake[0]].empty = false;
 	cells[snake[0]].direction = snakeDirection;
 
+
+	if (snake.size() == 2)
+	{
+		int head = snake[0];
+		int tail = snake[1];
+
+		if (cells[head].direction == 'N' && cells[tail].direction == 'S' || cells[head].direction == 'S' && cells[tail].direction == 'N')
+		{
+			cells[head].empty = true;
+			snake[0] = snake[1];
+			dead = true;
+		}
+
+		if (cells[head].direction == 'W' && cells[tail].direction == 'E' || cells[head].direction == 'E' && cells[tail].direction == 'W')
+		{
+			cells[head].empty = true;
+			snake[0] = snake[1];
+			dead = true;
+		}
+	}
+
 	if (snake[0] == apple)
 	{
 		eaten = true;
@@ -195,7 +216,7 @@ int main()
 	font.loadFromFile("Font/ARCADE_I.TTF");
 
 	sf::Clock clock;
-	float timer = 0, delay = 0.1;
+	float timer = 0, delay = 0.25;
 	float eatTimer = 0;
 
 	StartGame();
@@ -260,7 +281,6 @@ int main()
 			if (timer > delay)
 			{
 				timer = 0;
-
 				Update();
 			}
 
