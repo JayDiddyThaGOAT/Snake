@@ -5,9 +5,10 @@
 const int SIZE = 32;
 const int COUNT = 4;
 const int SCALE = 1;
+const int BORDER = 3;
 
-int width = COUNT * SIZE;
-int height = COUNT * SIZE;
+int width = COUNT * SIZE + BORDER;
+int height = COUNT * SIZE + BORDER;
 
 char snakeDirection;
 int snakeLength;
@@ -25,7 +26,7 @@ bool gameBegan, paused, dead, beatGame;
 struct Cell
 {
 	int x, y;
-	char direction = 0;
+	char direction;
 };
 
 Cell cells[COUNT * COUNT];
@@ -78,7 +79,7 @@ char OpppositeOf(char direction)
 	return oppositeDirection;
 }
 
-std::vector<char> DirectionToNeighbors(int root, Cell grid[])
+std::vector<char> DirectionsToNeighbors(int root, Cell grid[])
 {
 	std::vector<char> neighbors;
 
@@ -121,7 +122,7 @@ void SpawnApple()
 	} while (std::find(snake.begin(), snake.end(), apple) != snake.end());
 }
 
-void SetDirections(char* directions, Cell grid[])
+void BuildPath(Cell grid[], char* directions)
 {
 	//Hamiltonian Cycle that works only with a grid size of 4 rows and columns of cells
 	directions[0] = 'E';
@@ -140,6 +141,15 @@ void SetDirections(char* directions, Cell grid[])
 	directions[13] = 'W';
 	directions[14] = 'W';
 	directions[15] = 'W';
+
+	/*
+	std::vector<int> visited;
+
+	int current = 0;
+	std::vector<char> currentDirections = DirectionsToNeighbors(current, grid);
+	directions[current] = currentDirections[rand() % currentDirections.size()];
+	visited.push_back(current);
+	*/
 }
 
 void Update()
@@ -268,7 +278,7 @@ void StartGame()
 		Cell temp[COUNT * COUNT];
 		std::copy(std::begin(cells), std::end(cells), std::begin(temp));
 
-		SetDirections(snakeDirections, temp);
+		BuildPath(temp, snakeDirections);
 	}
 }
 
@@ -408,13 +418,13 @@ int main()
 		{
 			for (int j = 0; j < COUNT; j++)
 			{
-				emptySprite.setPosition(sf::Vector2f(i * SIZE, j * SIZE));
+				emptySprite.setPosition(sf::Vector2f(BORDER + i * SIZE, BORDER + j * SIZE));
 				window.draw(emptySprite);
 			}
 		}
 
 		int snakeHead = snake[0];
-		snakeHeadSprite.setPosition(cells[snakeHead].x * SIZE, cells[snakeHead].y * SIZE);
+		snakeHeadSprite.setPosition(BORDER + cells[snakeHead].x * SIZE, BORDER + cells[snakeHead].y * SIZE);
 		window.draw(snakeHeadSprite);
 
 		for (int i = 1; i < snake.size(); i++)
@@ -423,34 +433,33 @@ int main()
 
 			if (!eaten)
 			{
-				snakeBodySprite.setPosition(cells[snakePart].x * SIZE, cells[snakePart].y * SIZE);
+				snakeBodySprite.setPosition(BORDER + cells[snakePart].x * SIZE, BORDER + cells[snakePart].y * SIZE);
 				window.draw(snakeBodySprite);
 			}
 			else
 			{
-				snakeHeadSprite.setPosition(cells[snakePart].x * SIZE, cells[snakePart].y * SIZE);
+				snakeHeadSprite.setPosition(BORDER + cells[snakePart].x * SIZE, BORDER + cells[snakePart].y * SIZE);
 				window.draw(snakeHeadSprite);
 			}
 		}
 
-		appleSprite.setPosition(cells[apple].x * SIZE, cells[apple].y * SIZE);
+		appleSprite.setPosition(BORDER + cells[apple].x * SIZE, BORDER + cells[apple].y * SIZE);
 		window.draw(appleSprite);
 
 		for (int i = 0; i < COUNT * COUNT; i++)
 		{
-			sf::Text text(std::to_string(i), font);
+			sf::Text text;
 			text.setCharacterSize(SIZE / 4);
+			text.setFont(font);
 
-			if (!snakeAI)
+			if (snakeAI)
 			{
-				text.setFillColor(sf::Color::Black);
-			}
-			else
-			{
-				text.setString(snakeDirections[i]);
-				text.setFillColor(sf::Color::Black);
+				if (snakeDirections[i] != 0)
+					text.setString(snakeDirections[i]);
+
 			}
 
+			text.setFillColor(sf::Color::Black);
 			text.setPosition(cells[i].x * SIZE + text.getCharacterSize() / 2, cells[i].y * SIZE + text.getCharacterSize() / 2);
 
 			window.draw(text);
