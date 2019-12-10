@@ -1,9 +1,10 @@
 #include <SFML/Graphics.hpp>
-#include <stack>
+#include <set>
 #include <iostream>
 
 const int SIZE = 32;
-const int COUNT = 16;
+const int COUNT = 4;
+const int SCALE = 1;
 
 int width = COUNT * SIZE;
 int height = COUNT * SIZE;
@@ -13,21 +14,18 @@ int snakeLength;
 std::vector<int> snake;
 
 bool snakeAI = true;
-std::vector<int> snakePath;
-std::string snakePathDirections;
-int snakePathIndex;
+char snakeDirections[COUNT * COUNT];
 
 int apple;
 int newTail;
 bool eaten;
 
-bool gameBegan, paused, dead;
+bool gameBegan, paused, dead, beatGame;
 
 struct Cell
 {
 	int x, y;
-	char direction;
-	bool solid;
+	char direction = 0;
 };
 
 Cell cells[COUNT * COUNT];
@@ -41,110 +39,107 @@ int ManhattanDistance(int a, int b, Cell grid[])
 	return abs(grid[b].x - grid[a].x) + abs(grid[b].y - grid[a].y);
 }
 
-std::vector<int> NeighborsOf(int root, Cell grid[])
+char CalculateDirection(int a, int b, Cell grid[])
 {
-	std::vector<int> neighbors;
+	int x = grid[b].x - grid[a].x;
+	int y = grid[b].y - grid[a].y;
 
-	if (grid[root - COUNT].y >= 0)
-		neighbors.push_back(root - COUNT);
+	if (x == 0)
+	{
+		if (y < 0)
+			return 'N';
+		else if (y > 0)
+			return 'S';
+	}
+	else if (y == 0)
+	{
+		if (x < 0)
+			return 'W';
+		else if (x > 0)
+			return 'E';
+	}
 
-	if (grid[root + 1].x < COUNT - 1)
-		neighbors.push_back(root + 1);
+	return 0;
+}
 
-	if (grid[root + COUNT].y < COUNT - 1)
-		neighbors.push_back(root + COUNT);
+char OpppositeOf(char direction)
+{
+	char oppositeDirection = 0;
 
-	if (grid[root - 1].x >= 0)
-		neighbors.push_back(root - 1);
+	if (direction == 'N')
+		oppositeDirection = 'S';
+	else if (direction == 'S')
+		oppositeDirection = 'N';
+	else if (direction == 'W')
+		oppositeDirection = 'E';
+	else if (direction == 'E')
+		oppositeDirection = 'W';
+
+	return oppositeDirection;
+}
+
+std::vector<char> DirectionToNeighbors(int root, Cell grid[])
+{
+	std::vector<char> neighbors;
+
+	if (grid[root].y > 0)
+	{
+		neighbors.push_back('N'); //root - COUNT
+	}
+
+	if (grid[root].x < COUNT - 1)
+	{
+		neighbors.push_back('E'); //root + 1
+	}
+
+	if (grid[root].y < COUNT - 1)
+	{
+		neighbors.push_back('S'); //root + COUNT
+	}
+
+	if (grid[root].x > 0)
+	{
+		neighbors.push_back('W'); //root - 1
+	}
 
 
 	return neighbors;
 }
 
-std::vector<int> ShortestPathBetween(int start, int end, Cell grid[])
-{
-	std::vector<int> path;
-
-	std::stack<int> open;
-	open.push(start);
-
-	while (!open.empty())
-	{
-		int current = open.top();
-		open.pop();
-
-		path.push_back(current);
-
-		if (current == end)
-			return path;
-
-		std::vector<int> currentNeighbors = NeighborsOf(current, grid);
-		int minNeighbor = -1;
-		int minDistance = INT_MAX;
-		for (auto& neighbor : currentNeighbors)
-		{
-			int distance = ManhattanDistance(neighbor, end, grid);
-			if (distance < minDistance)
-			{
-				minNeighbor = neighbor;
-				minDistance = distance;
-			}
-		}
-
-		if (minNeighbor < 0)
-			break;
-
-		open.push(minNeighbor);
-	}
-
-	path.clear();
-	return path;
-}
-
-std::string GetPathDirections(std::vector<int> path, Cell grid[])
-{
-	std::string directions;
-
-	int i = 0;
-	int j = 1;
-
-	while (j < path.size())
-	{
-		int k = path[i];
-		int l = path[j];
-
-		int x = grid[l].x - grid[k].x;
-		int y = grid[l].y - grid[k].y;
-
-		if (x == 0)
-		{
-			if (y == -1)
-				directions.append("N");
-			else if (y == 1)
-				directions.append("S");
-		}
-		else if (y == 0)
-		{
-			if (x == -1)
-				directions.append("W");
-			else if (x == 1)
-				directions.append("E");
-		}
-
-		i++;
-		j++;
-	}
-
-	return directions;
-}
-
 void SpawnApple()
 {
+	if (snake.size() == (COUNT * COUNT) - 1)
+	{
+		apple = -1;
+		beatGame = true;
+		return;
+	}
+
 	do
 	{
 		apple = rand() % (COUNT * COUNT);
-	} while (cells[apple].solid);
-	cells[apple].solid = false;
+	} while (std::find(snake.begin(), snake.end(), apple) != snake.end());
+}
+
+void SetDirections(char* directions, Cell grid[])
+{
+	//Hamiltonian Cycle that works only with a grid size of 4 rows and columns of cells
+	directions[0] = 'E';
+	directions[1] = 'E';
+	directions[2] = 'E';
+	directions[3] = 'S';
+	directions[4] = 'N';
+	directions[5] = 'W';
+	directions[6] = 'W';
+	directions[7] = 'S';
+	directions[8] = 'E';
+	directions[9] = 'E';
+	directions[10] = 'N';
+	directions[11] = 'S';
+	directions[12] = 'N';
+	directions[13] = 'W';
+	directions[14] = 'W';
+	directions[15] = 'W';
 }
 
 void Update()
@@ -158,11 +153,7 @@ void Update()
 
 	if (snakeAI)
 	{
-		if (snakePathIndex < snakePathDirections.length())
-		{
-			snakeDirection = snakePathDirections.at(snakePathIndex);
-			snakePathIndex++;
-		}
+		snakeDirection = snakeDirections[head];
 	}
 
 	switch (snakeDirection)
@@ -170,10 +161,8 @@ void Update()
 	case 'N':
 		north = head - COUNT;
 
-		if (cells[head].y > 0 && !cells[north].solid)
+		if (cells[head].y > 0 && std::find(snake.begin(), snake.end(), north) == snake.end())
 		{
-			cells[tail].solid = false;
-			cells[head].solid = false;
 			snake[0] = north;
 		}
 		else
@@ -183,10 +172,8 @@ void Update()
 	case 'E':
 		east = head + 1;
 
-		if (cells[head].x < COUNT - 1 && !cells[east].solid)
+		if (cells[head].x < COUNT - 1 && std::find(snake.begin(), snake.end(), east) == snake.end())
 		{
-			cells[tail].solid = false;
-			cells[head].solid = false;
 			snake[0] = east;
 		}
 		else
@@ -196,10 +183,8 @@ void Update()
 	case 'S':
 		south = head + COUNT;
 
-		if (cells[head].y < COUNT - 1 && !cells[south].solid)
+		if (cells[head].y < COUNT - 1 && std::find(snake.begin(), snake.end(), south) == snake.end())
 		{
-			cells[tail].solid = false;
-			cells[head].solid = false;
 			snake[0] = south;
 		}
 		else
@@ -209,10 +194,8 @@ void Update()
 	case 'W':
 		west = head - 1;
 
-		if (cells[head].x > 0 && !cells[west].solid)
+		if (cells[head].x > 0 && std::find(snake.begin(), snake.end(), west) == snake.end())
 		{
-			cells[tail].solid = false;
-			cells[head].solid = false;
 			snake[0] = west;
 		}
 		else
@@ -223,10 +206,8 @@ void Update()
 
 	head = snake[0];
 	cells[head].direction = snakeDirection;
-	for (auto& snakePart : snake)
-		cells[snakePart].solid = true;
 
-	if (head == apple)
+	if (snake[0] == apple)
 	{
 		SpawnApple();
 
@@ -257,6 +238,7 @@ void StartGame()
 	paused = false;
 	gameBegan = false;
 	dead = false;
+	beatGame = false;
 
 	for (int i = 0; i < COUNT; i++)
 	{
@@ -264,7 +246,6 @@ void StartGame()
 		{
 			cells[i * COUNT + j].x = j;
 			cells[i * COUNT + j].y = i;
-			cells[i * COUNT + j].solid = false;
 		}
 	}
 
@@ -279,17 +260,15 @@ void StartGame()
 
 
 	snake.push_back(center);
-	cells[snake[0]].solid = true;
 
 	SpawnApple();
 
-	snakePathIndex = 0;
 	if (snakeAI)
 	{
 		Cell temp[COUNT * COUNT];
 		std::copy(std::begin(cells), std::end(cells), std::begin(temp));
-		snakePath = ShortestPathBetween(snake[0], apple, temp);
-		snakePathDirections = GetPathDirections(snakePath, temp);
+
+		SetDirections(snakeDirections, temp);
 	}
 }
 
@@ -297,7 +276,11 @@ int main()
 {
 	srand(time(NULL));
 
+	auto desktop = sf::VideoMode::getDesktopMode();
+
 	sf::RenderWindow window(sf::VideoMode(width, height), "Snake", sf::Style::Titlebar | sf::Style::Close);
+	window.setSize(sf::Vector2u(width * SCALE, height * SCALE));
+	window.setPosition(sf::Vector2i(desktop.width / 2 - window.getSize().x / 2, desktop.height / 2 - window.getSize().y / 2));
 	window.setKeyRepeatEnabled(false);
 
 	emptyTexture.loadFromFile("Sprites/Empty.png");
@@ -374,7 +357,7 @@ int main()
 					{
 						if (gameBegan)
 						{
-							if (dead)
+							if (dead || beatGame)
 								StartGame();
 							else
 								paused = !paused;
@@ -392,7 +375,7 @@ int main()
 		clock.restart();
 		timer += time;
 
-		if (gameBegan && !paused && !dead)
+		if (gameBegan && !paused && !dead && !beatGame)
 		{
 			if (timer > delay)
 			{
@@ -414,9 +397,6 @@ int main()
 
 		if (dead)
 		{
-			for (int i = 0; i < COUNT * COUNT; i++)
-				cells[i].solid = false;
-
 			if (eaten)
 			{
 				eatTimer = 0;
@@ -461,10 +441,15 @@ int main()
 			sf::Text text(std::to_string(i), font);
 			text.setCharacterSize(SIZE / 4);
 
-			if (cells[i].solid)
-				text.setFillColor(sf::Color::Blue);
-			else
+			if (!snakeAI)
+			{
 				text.setFillColor(sf::Color::Black);
+			}
+			else
+			{
+				text.setString(snakeDirections[i]);
+				text.setFillColor(sf::Color::Black);
+			}
 
 			text.setPosition(cells[i].x * SIZE + text.getCharacterSize() / 2, cells[i].y * SIZE + text.getCharacterSize() / 2);
 
