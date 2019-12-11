@@ -4,8 +4,8 @@
 
 const int SIZE = 32;
 const int COUNT = 4;
-const int SCALE = 1;
-const int BORDER = 3;
+const int SCALE = 4;
+const int BORDER = 2;
 
 int width = COUNT * SIZE + BORDER;
 int height = COUNT * SIZE + BORDER;
@@ -26,7 +26,7 @@ bool gameBegan, paused, dead, beatGame;
 struct Cell
 {
 	int x, y;
-	char direction;
+	char direction = 0;
 };
 
 Cell cells[COUNT * COUNT];
@@ -79,7 +79,7 @@ char OpppositeOf(char direction)
 	return oppositeDirection;
 }
 
-std::vector<char> DirectionsToNeighbors(int root, Cell grid[])
+std::vector<char> DirectionToNeighbors(int root, Cell grid[])
 {
 	std::vector<char> neighbors;
 
@@ -122,7 +122,7 @@ void SpawnApple()
 	} while (std::find(snake.begin(), snake.end(), apple) != snake.end());
 }
 
-void BuildPath(Cell grid[], char* directions)
+void SetDirections(char* directions, Cell grid[])
 {
 	//Hamiltonian Cycle that works only with a grid size of 4 rows and columns of cells
 	directions[0] = 'E';
@@ -141,15 +141,6 @@ void BuildPath(Cell grid[], char* directions)
 	directions[13] = 'W';
 	directions[14] = 'W';
 	directions[15] = 'W';
-
-	/*
-	std::vector<int> visited;
-
-	int current = 0;
-	std::vector<char> currentDirections = DirectionsToNeighbors(current, grid);
-	directions[current] = currentDirections[rand() % currentDirections.size()];
-	visited.push_back(current);
-	*/
 }
 
 void Update()
@@ -278,7 +269,7 @@ void StartGame()
 		Cell temp[COUNT * COUNT];
 		std::copy(std::begin(cells), std::end(cells), std::begin(temp));
 
-		BuildPath(temp, snakeDirections);
+		SetDirections(snakeDirections, temp);
 	}
 }
 
@@ -449,15 +440,11 @@ int main()
 		for (int i = 0; i < COUNT * COUNT; i++)
 		{
 			sf::Text text;
-			text.setCharacterSize(SIZE / 4);
 			text.setFont(font);
+			text.setCharacterSize(SIZE / 4);
 
 			if (snakeAI)
-			{
-				if (snakeDirections[i] != 0)
-					text.setString(snakeDirections[i]);
-
-			}
+				text.setString(snakeDirections[i]);
 
 			text.setFillColor(sf::Color::Black);
 			text.setPosition(cells[i].x * SIZE + text.getCharacterSize() / 2, cells[i].y * SIZE + text.getCharacterSize() / 2);
