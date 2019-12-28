@@ -21,13 +21,12 @@ Must have Visual Studio installed if you want to edit the code and debug it your
 ### Installing
 A step by step series of examples that tell you how to get a development env running
 ```
-Clone this repo or download the ZIP
+1. Clone this repo or download the ZIP
+2. Extract ZIP file
 ```
 ## Running the Game
 ```
-1. Open the Debug folder
-2. Click on the Snake.exe
-3. Press SPACE to play/pause the game
+1. Click on the Snake shortcut
 ```
 
 ## Testing the Game
