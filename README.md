@@ -43,6 +43,6 @@ A step by step series of examples that tell you how to get a development env run
 | S, Down       | Go Down       |
 | D, Left       | Go Left       |
 | A, Right      | Go Right      |
-| Space         | Pause / Restart |
+| Space         | Pause         |
 | T             | Display Text |
 | Esc           | Quit          |
