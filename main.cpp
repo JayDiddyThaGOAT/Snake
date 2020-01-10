@@ -24,8 +24,8 @@ int newTail;
 bool eaten;
 
 bool gameBegan, paused, dead, beatGame;
-
 bool displayText;
+
 
 struct Cell
 {
@@ -41,6 +41,8 @@ Cell cells[COUNT * COUNT];
 
 sf::Texture emptyTexture, appleTexture, snakeHeadTexture, snakeBodyTexture;
 sf::Font font;
+
+sf::Text gameTitle, pauseTitle, resultsTitle, mainMenu, pause, play, quit, ai, player;
 
 int ManhattanDistance(int a, int b, Cell grid[])
 {
@@ -96,6 +98,9 @@ void SpawnApple()
 	{
 		apple = -1;
 		beatGame = true;
+		resultsTitle.setString("You Win");
+		resultsTitle.setCharacterSize(SIZE * 1.3);
+		resultsTitle.setFillColor(sf::Color::Green);
 		return;
 	}
 
@@ -168,6 +173,13 @@ void Update()
 			dead = true;
 
 		break;
+	}
+
+	if (dead)
+	{
+		resultsTitle.setString("You Lose");
+		resultsTitle.setCharacterSize(SIZE * 1.25);
+		resultsTitle.setFillColor(sf::Color::Red);
 	}
 
 	cells[snake[0]].direction = snakeDirection;
@@ -455,15 +467,70 @@ void MapDirectionsFromPath(char* directions, std::vector<int>& path)
 	}
 }
 
+bool HoveringOver(sf::Text& text, sf::RenderWindow& window)
+{
+	sf::FloatRect textRect = text.getGlobalBounds();
+	sf::Vector2f mousePosition = static_cast<sf::Vector2f>(sf::Mouse::getPosition(window));
+	return textRect.contains(mousePosition);
+}
+
 void StartGame()
 {
 	srand(time(NULL));
 
 	paused = false;
-	gameBegan = false;
 	dead = false;
 	beatGame = false;
 
+	gameTitle.setFont(font);
+	gameTitle.setCharacterSize(SIZE * 2);
+	gameTitle.setString("Snake");
+	gameTitle.setPosition(SIZE, SIZE);
+	gameTitle.setFillColor(sf::Color::Green);
+
+	pauseTitle.setFont(font);
+	pauseTitle.setCharacterSize(SIZE * 1.75);
+	pauseTitle.setString("Paused");
+	pauseTitle.setPosition(SIZE, SIZE);
+	pauseTitle.setFillColor(sf::Color::Green);
+
+	resultsTitle.setFont(font);
+	resultsTitle.setPosition(SIZE, SIZE * 2);
+
+	play.setFont(font);
+	play.setCharacterSize(SIZE * 1.5);
+	play.setString("Play");
+	play.setPosition(SIZE * 3, SIZE * 6);
+
+	mainMenu.setFont(font);
+	mainMenu.setCharacterSize(SIZE * 1.25);
+	mainMenu.setString("Main Menu");
+	mainMenu.setPosition(SIZE / 2, SIZE * 6);
+
+	quit.setFont(font);
+	quit.setCharacterSize(SIZE * 1.5);
+	quit.setString("Quit");
+	quit.setPosition(SIZE * 3, SIZE * 8);
+
+	player.setFont(font);
+	player.setCharacterSize(SIZE / 3);
+	player.setString("Left Click " + play.getString() + " To Control Snake");
+	player.setPosition(SIZE, SIZE * 4.25);
+	player.setFillColor(sf::Color::Green);
+
+	ai.setFont(font);
+	ai.setCharacterSize(SIZE / 3);
+	ai.setString("Right Click " + play.getString() + " To Watch Snake");
+	ai.setPosition(player.getPosition().x, player.getPosition().y + player.getCharacterSize() * 1.5);
+	ai.setFillColor(sf::Color::Green);
+
+	pause.setFont(font);
+	pause.setCharacterSize(SIZE / 3);
+	pause.setString("Press SPACE to Pause/UnPause the Game");
+	pause.setPosition(SIZE / 3, SIZE * (COUNT - 1));
+	pause.setFillColor(sf::Color::Green);
+
+	snakeDirection = 'X';
 	snake.clear();
 	snakeLength = 0;
 	int center = (COUNT * COUNT) / 2;
@@ -551,11 +618,12 @@ int main()
 	float eatTimer = 0;
 
 	if (snakeAI)
-		delay = 0.01f;
+		delay = 0.1f;
 	else
 		delay = 0.1f;
 
 	StartGame();
+	gameBegan = false;
 
 	while (window.isOpen())
 	{
@@ -569,63 +637,98 @@ int main()
 				if (event.key.code == sf::Keyboard::Escape)
 					window.close();
 
-				if (event.key.code == sf::Keyboard::T)
-					displayText = !displayText;
-
-				if (!snakeAI)
+				if (gameBegan)
 				{
-					if (event.key.code == sf::Keyboard::W || event.key.code == sf::Keyboard::Up)
-					{
-						snakeDirection = 'N';
+					if (event.key.code == sf::Keyboard::T)
+						displayText = !displayText;
 
-						if (!gameBegan)
-							gameBegan = true;
-					}
-					else if (event.key.code == sf::Keyboard::D || event.key.code == sf::Keyboard::Right)
+					if (!(dead || beatGame))
 					{
-						snakeDirection = 'E';
+						if (event.key.code == sf::Keyboard::Space)
+							paused = !paused;
+					}
 
-						if (!gameBegan)
-							gameBegan = true;
-					}
-					else if (event.key.code == sf::Keyboard::S || event.key.code == sf::Keyboard::Down)
+					if (!snakeAI)
 					{
-						snakeDirection = 'S';
-
-						if (!gameBegan)
-							gameBegan = true;
-					}
-					else if (event.key.code == sf::Keyboard::A || event.key.code == sf::Keyboard::Left)
-					{
-						snakeDirection = 'W';
-
-						if (!gameBegan)
-							gameBegan = true;
-					}
-					else if (event.key.code == sf::Keyboard::Space)
-					{
-						if (gameBegan)
+						if (event.key.code == sf::Keyboard::W || event.key.code == sf::Keyboard::Up)
 						{
-							if (dead)
-								StartGame();
-							else
-								paused = !paused;
+							snakeDirection = 'N';
+						}
+						else if (event.key.code == sf::Keyboard::D || event.key.code == sf::Keyboard::Right)
+						{
+							snakeDirection = 'E';
+						}
+						else if (event.key.code == sf::Keyboard::S || event.key.code == sf::Keyboard::Down)
+						{
+							snakeDirection = 'S';
+						}
+						else if (event.key.code == sf::Keyboard::A || event.key.code == sf::Keyboard::Left)
+						{
+							snakeDirection = 'W';
 						}
 					}
 				}
-				else
+			}
+			else if (event.type == sf::Event::MouseButtonPressed)
+			{
+				if (paused)
 				{
-					if (event.key.code == sf::Keyboard::Space)
+					if (mainMenu.getFillColor() == sf::Color::Green)
+						mainMenu.setStyle(sf::Text::Bold);
+				}
+
+				if (!gameBegan || paused || dead || beatGame)
+				{
+					if (quit.getFillColor() == sf::Color::Green)
+						quit.setStyle(sf::Text::Bold);
+				}
+
+				if (!gameBegan || dead || beatGame)
+				{
+					if (play.getFillColor() == sf::Color::Green)
 					{
-						if (gameBegan)
-						{
-							if (dead || beatGame)
-								StartGame();
-							else
-								paused = !paused;
-						}
-						else
-							gameBegan = true;
+						play.setStyle(sf::Text::Bold);
+
+						if (event.mouseButton.button == sf::Mouse::Left)
+							snakeAI = false;
+
+						if (event.mouseButton.button == sf::Mouse::Right)
+							snakeAI = true;
+					}
+				}
+			}
+			else if (event.type == sf::Event::MouseButtonReleased)
+			{
+				if (paused)
+				{
+					if (mainMenu.getFillColor() == sf::Color::Green)
+					{
+						if (snakeAI)
+							memset(snakeDirections, 0, COUNT * COUNT);
+
+						gameBegan = false;
+						paused = false;
+					}
+				}
+
+				if (!gameBegan || paused || dead || beatGame)
+				{
+					if (quit.getFillColor() == sf::Color::Green)
+					{
+						quit.setStyle(sf::Text::Regular);
+						window.close();
+					}
+				}
+
+				if (!gameBegan || dead || beatGame)
+				{
+					if (play.getFillColor() == sf::Color::Green)
+					{
+						play.setStyle(sf::Text::Bold);
+						play.setFillColor(sf::Color::Red);
+
+						StartGame();
+						gameBegan = true;
 					}
 				}
 			}
@@ -635,9 +738,11 @@ int main()
 
 		float time = clock.getElapsedTime().asSeconds();
 		clock.restart();
-		timer += time;
 
-		if (gameBegan && !paused && !dead && !beatGame)
+		if (!paused)
+			timer += time;
+
+		if (gameBegan && !dead && !beatGame)
 		{
 			if (timer > delay)
 			{
@@ -666,18 +771,84 @@ int main()
 			}
 		}
 
-		for (int i = 0; i < COUNT; i++)
+		if (gameBegan)
 		{
-			for (int j = 0; j < COUNT; j++)
+			if (!paused)
 			{
-				window.draw(cells[i * COUNT + j].sprite);
-
-				if (displayText)
+				if (!(dead || beatGame))
 				{
-					window.draw(cells[i * COUNT + j].indexText);
-					window.draw(cells[i * COUNT + j].directionText);
+					for (int i = 0; i < COUNT; i++)
+					{
+						for (int j = 0; j < COUNT; j++)
+						{
+							window.draw(cells[i * COUNT + j].sprite);
+
+							if (displayText)
+							{
+								window.draw(cells[i * COUNT + j].indexText);
+								window.draw(cells[i * COUNT + j].directionText);
+							}
+						}
+					}
+				}
+				else
+				{
+					window.draw(resultsTitle);
+					window.draw(player);
+					window.draw(ai);
+
+					if (HoveringOver(play, window))
+						play.setFillColor(sf::Color::Green);
+					else
+						play.setFillColor(sf::Color::Red);
+					window.draw(play);
+
+					if (HoveringOver(quit, window))
+						quit.setFillColor(sf::Color::Green);
+					else
+						quit.setFillColor(sf::Color::Red);
+					window.draw(quit);
 				}
 			}
+			else
+			{
+				window.draw(pauseTitle);
+
+				if (HoveringOver(mainMenu, window))
+					mainMenu.setFillColor(sf::Color::Green);
+				else
+					mainMenu.setFillColor(sf::Color::Red);
+				window.draw(mainMenu);
+
+				if (HoveringOver(quit, window))
+					quit.setFillColor(sf::Color::Green);
+				else
+					quit.setFillColor(sf::Color::Red);
+				window.draw(quit);
+
+				window.draw(pause);
+			}
+		}
+		else
+		{
+			window.draw(gameTitle);
+
+			if (HoveringOver(play, window))
+				play.setFillColor(sf::Color::Green);
+			else
+				play.setFillColor(sf::Color::Red);
+			window.draw(play);
+
+			if (HoveringOver(quit, window))
+				quit.setFillColor(sf::Color::Green);
+			else
+				quit.setFillColor(sf::Color::Red);
+			window.draw(quit);
+
+			window.draw(player);
+			window.draw(ai);
+
+			window.draw(pause);
 		}
 
 		window.display();
