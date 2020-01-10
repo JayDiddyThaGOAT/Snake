@@ -3,9 +3,7 @@
 ![](https://thumbs.gfycat.com/EminentDarlingFreshwatereel-size_restricted.gif)
 
 This is my version of the old school game, **Snake**.  I drew the sprites of the cells in Photoshop & developed the game in the Visual
-Studio IDE programmed in C++ using the SFML Engine. The goal of Snake is to eat the apple in the grid so that the snake can grow without 
-the snake touching itself. A new apple is generated onto any empty cell in the grid once the snake eats the apple. After I created the 
-original game, I implemented artifical intelligence for the snake by creating a path that cycles through all of the cells in the grid until
+Studio IDE programmed in C++ using the SFML Engine. After I created the original game, I implemented artifical intelligence for the snake by creating a path that cycles through all of the cells in the grid until
 the game is completed.
 
 ## Getting Started
