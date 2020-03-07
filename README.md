@@ -24,7 +24,8 @@ A step by step series of examples that tell you how to get a development env run
 ```
 ## Running the Game
 ```
-1. Click on the Snake shortcut
+1. Open the **Release** folder
+2. Click on **Snake.exe**
 ```
 
 ## Testing the Game
