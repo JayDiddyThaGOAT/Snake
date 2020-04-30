@@ -28,11 +28,12 @@ A step by step series of examples that tell you how to get a development env run
 2. Click on **Snake.exe**
 ```
 
-## Testing the Game
+## Modifying the Game w/ Visual Studio 2019
 ```
-1. Open Visual Studio
+1. Open Visual Studio 2019
 2. Make sure the target environment is x86
-3. Run the test by pressing Ctrl+F5, F5, or by clicking the play button
+3. Make your modifications in C++
+4. Test your work by pressing Ctrl+F5, F5, or by clicking the play button
 ```
 
 ## Controls

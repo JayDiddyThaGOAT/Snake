@@ -561,12 +561,6 @@ void StartGame()
 		}
 	}
 
-	if (snakeAI)
-	{
-		std::vector<int> path = BuildHamiltonianCycle(cells);
-		MapDirectionsFromPath(snakeDirections, path);
-	}
-
 	for (int i = 0; i < COUNT * COUNT; i++)
 	{
 		sf::Text directionText;
@@ -617,12 +611,11 @@ int main()
 	float timer = 0, delay;
 	float eatTimer = 0;
 
-	if (snakeAI)
-		delay = 0.1f;
-	else
-		delay = 0.1f;
-
 	StartGame();
+
+	std::vector<int> path = BuildHamiltonianCycle(cells);
+	MapDirectionsFromPath(snakeDirections, path);
+
 	gameBegan = false;
 
 	while (window.isOpen())
@@ -690,10 +683,16 @@ int main()
 						play.setStyle(sf::Text::Bold);
 
 						if (event.mouseButton.button == sf::Mouse::Left)
+						{
 							snakeAI = false;
+							delay = 0.1f;
+						}
 
 						if (event.mouseButton.button == sf::Mouse::Right)
+						{
 							snakeAI = true;
+							delay = 0.05f;
+						}
 					}
 				}
 			}
@@ -704,7 +703,13 @@ int main()
 					if (mainMenu.getFillColor() == sf::Color::Green)
 					{
 						if (snakeAI)
+						{
 							memset(snakeDirections, 0, COUNT * COUNT);
+
+							path = BuildHamiltonianCycle(cells);
+							MapDirectionsFromPath(snakeDirections, path);
+
+						}
 
 						gameBegan = false;
 						paused = false;
